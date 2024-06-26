@@ -1,7 +1,9 @@
+import os
 import streamlit as st
+from backend2 import get_index_name
 from embedding import process_docx  # Certifique-se de ajustar o nome do arquivo de acordo com onde você salvar a função
 from datetime import datetime
-from backend2 import get_index_name
+from embeddings_dadosgerais import process_pdf 
 
 # Título do aplicativo
 st.title("Chatbot BSP Cloud")
@@ -55,3 +57,16 @@ if st.toggle("Transcrição de Clientes"):
                 st.success(f"Documento processado e indexado com sucesso: {index_name}")
             except Exception as e:
                 st.error(f"Ocorreu um erro: {e}")
+
+# Botão para abrir a área de upload de documentação AWS
+if st.toggle("Documentação AWS"):
+    uploaded_file_pdf = st.file_uploader("Envie um arquivo PDF", type="pdf")
+
+    if uploaded_file_pdf:
+        with st.spinner('Processando o arquivo...'):
+            try:
+                index_name_pdf = process_pdf(uploaded_file_pdf)
+                st.success(f"Documento PDF processado e indexado com sucesso: {index_name_pdf}")
+            except Exception as e:
+                st.error(f"Ocorreu um erro: {e}")
+    

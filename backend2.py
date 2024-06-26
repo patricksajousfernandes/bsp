@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import os
 import re
 
+# Carregar variáveis de ambiente
 load_dotenv()
 
 # Configuração dos embeddings e do modelo de linguagem
@@ -37,45 +38,33 @@ def get_index_name(input_text):
         
         client_name_clean = re.sub(r'\W+', '', client_name).lower()
         meeting_date_clean = re.sub(r'\W+', '-', meeting_date).lower()
-
         index_name = f"{client_name_clean}-{meeting_date_clean}"
-
-        try:
-            vectorstore = PineconeVectorStore(
-                index_name=index_name, embedding=embeddings
-            )
-        except PineconeNotFoundException as e:
-            print(f"Índice '{index_name}' não encontrado no Pinecone.")
-            return None
         
-        retriever = vectorstore.as_retriever()
-
-        retrieval_qa_chat_prompt = hub.pull("texte/resumidordetexto")
-
-        combine_docs_chain = create_stuff_documents_chain(llm_model, retrieval_qa_chat_prompt)
-        retrieval_chain = create_retrieval_chain(retriever, combine_docs_chain)
-
-        result = retrieval_chain.invoke({"input": input_text})
-
-        return result['answer']
-        
+        return process_input(input_text, index_name)
     else:
-        try:
-            vectorstore = PineconeVectorStore(
-                index_name=os.environ["INDEX_NAME1"], embedding=embeddings
-            )
-        except PineconeNotFoundException as e:
-            print(f"Índice '{os.environ['INDEX_NAME1']}' não encontrado no Pinecone.")
-            return None
-        
-        retriever = vectorstore.as_retriever()
+        return process_input(input_text, os.environ["INDEX_NAME1"])
 
+def process_input(input_text, index_name):
+    try:
+        vectorstore = PineconeVectorStore(
+            index_name=index_name, embedding=embeddings
+        )
+    except PineconeNotFoundException:
+        print(f"Índice '{index_name}' não encontrado no Pinecone.")
+        return None
+    
+    retriever = vectorstore.as_retriever()
+    
+    if index_name == os.environ["INDEX_NAME1"]:
         retrieval_qa_chat_prompt = hub.pull("texte/awsprompt")
+    else:
+        retrieval_qa_chat_prompt = hub.pull("texte/resumidordetexto")
+    
+    combine_docs_chain = create_stuff_documents_chain(llm_model, retrieval_qa_chat_prompt)
+    retrieval_chain = create_retrieval_chain(retriever, combine_docs_chain)
+    
+    result = retrieval_chain.invoke({"input": input_text})
+    
+    return result['answer']
 
-        combine_docs_chain = create_stuff_documents_chain(llm_model, retrieval_qa_chat_prompt)
-        retrieval_chain = create_retrieval_chain(retriever, combine_docs_chain)
-
-        result = retrieval_chain.invoke({"input": input_text})
-
-        return result['answer']
 
