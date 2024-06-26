@@ -47,7 +47,6 @@ def process_docx(uploaded_file, client_name, meeting_date):
 
         # Inicializar o objeto BedrockEmbeddings
         embeddings = BedrockEmbeddings(
-            credentials_profile_name="default",
             region_name="us-east-1",
             model_id="amazon.titan-embed-text-v2:0",
             aws_access_key_id=aws_access_key_id,

@@ -16,7 +16,6 @@ index_name1 = os.getenv("INDEX_NAME1")
 
 embeddings = BedrockEmbeddings(
     api_key=pinecone_api_key,
-    credentials_profile_name="default",
     region_name="us-east-1",
     model_id="amazon.titan-embed-text-v2:0",
     aws_access_key_id=aws_access_key_id,
@@ -24,7 +23,6 @@ embeddings = BedrockEmbeddings(
 )
 
 llm_model = ChatBedrock(
-    credentials_profile_name='default',
     region_name="us-east-1",
     model_id='anthropic.claude-3-5-sonnet-20240620-v1:0',
     model_kwargs={
