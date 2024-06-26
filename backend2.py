@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import os
 import re
 
-# Carregar variáveis de ambiente
+
 load_dotenv()
 
 # Configuração dos embeddings e do modelo de linguagem
