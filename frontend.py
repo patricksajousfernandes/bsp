@@ -1,76 +1,57 @@
-# Frontend.py
-
 import streamlit as st
+from embedding import process_docx  # Certifique-se de ajustar o nome do arquivo de acordo com onde você salvar a função
+from datetime import datetime
+from backend2 import get_index_name
 
-# Verifique se o módulo backend está disponível e importe-o
-try:
-    import backend
-except ModuleNotFoundError:
-    st.error('Módulo backend não encontrado. Verifique se está instalado e disponível.')
+# Título do aplicativo
+st.title("Chatbot BSP Cloud")
 
-# Configurações iniciais da página
-st.set_page_config(page_title='Bspzinho', layout='wide')
+# Inicialize o histórico de chat
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# CSS personalizado para o tema escuro e estilo do chat
-# ... (mantenha o CSS como está)
+# Exiba as mensagens de chat do histórico na reexecução do aplicativo
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# Título do chatbot com ícone
-st.markdown("<h1 style='text-align: center; color: blue;'>Bspzinho 😎</h1>", unsafe_allow_html=True)
+# Aceite a entrada do usuário
+if prompt := st.chat_input("O que você gostaria de perguntar?"):
+    # Adicione a mensagem do usuário ao histórico de chat
+    st.session_state.messages.append({"role": "user", "content": prompt})
 
-# Inicializa a memória do chatbot e o histórico do chat
-if 'memory' not in st.session_state:
-    st.session_state.memory = []
-if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = []
+    # Exiba a mensagem do usuário no contêiner de mensagem de chat
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-# Função para formatar a resposta do chatbot
-def format_response(response):
-    # Divida a resposta em linhas
-    lines = response.split('- **')
-    # Remova espaços vazios e linhas em branco
-    lines = [line.strip() for line in lines if line.strip()]
-    # Formate cada linha como um item de lista HTML
-    formatted_lines = ['<li>' + line.replace('**', '') + '</li>' for line in lines]
-    # Junte todas as linhas formatadas em uma lista HTML
-    return '<ul>' + ''.join(formatted_lines) + '</ul>'
+    # Adicione uma mensagem de "Carregando..."
+    with st.spinner('Processando sua pergunta...'):
+        try:
+            # Chame a função do backend com a entrada do usuário
+            response = get_index_name(prompt)
+        except Exception as e:
+            st.error(f"Ocorreu um erro: {e}")
+            st.stop()
 
-# Container para o histórico do chat
-with st.container():
-    st.markdown("## Histórico do Chat")
-    # Renderiza o histórico do chat
-    for message in st.session_state.chat_history:
-        if message['role'] == 'user':
-            st.markdown(f"<div class='message user-message'>{message['text']}</div>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"<div class='message assistant-message'>{message['text']}</div>", unsafe_allow_html=True)
+    # Exiba a resposta do assistente no contêiner de mensagem de chat
+    with st.chat_message("assistant"):
+        st.write(response)
 
-# Container para a entrada do usuário
-with st.container():
-    st.markdown("## Faça sua Pergunta")
-    
-    # Crie o widget com um label não vazio e oculte-o se necessário
-    input_text = st.text_input("Digite aqui sua pergunta...", key="user_input", label_visibility="collapsed")
+    # Adicione a resposta do assistente ao histórico de chat
+    st.session_state.messages.append({"role": "assistant", "content": response})
 
-    # Botão para enviar a mensagem
-    send_button = st.button('Enviar')
+# Botão para abrir a área de upload
+if st.toggle("Transcrição de Clientes"):
+    # Adicione um botão para enviar um arquivo DOCX
+    uploaded_file = st.file_uploader("Envie um arquivo DOCX", type="docx")
+    client_name = st.text_input("Nome do Cliente")
+    meeting_date = st.date_input("Data da Reunião")
 
-    # Verifica se Enter foi pressionado ou se o botão foi clicado
-    if send_button or st.session_state.user_input:
-        with st.spinner('Aguarde enquanto a resposta está sendo gerada...'):
-            # Adiciona a mensagem do usuário ao histórico do chat
-            st.session_state.chat_history.append({"role": "user", "text": input_text})
-
-            # Processa a mensagem do usuário e obtém a resposta do chatbot
-            chat_response, st.session_state.memory = backend.utilizar_llm_com_pinecone_e_RAG(input_text, st.session_state.memory)
-
-            # Formata a resposta do chatbot
-            formatted_chat_response = format_response(chat_response)
-
-            # Adiciona a resposta formatada do chatbot ao histórico do chat
-            st.session_state.chat_history.append({"role": "assistant", "text": formatted_chat_response})
-
-            # Exibe a resposta formatada do chatbot
-            st.markdown(f"<div class='message assistant-message'>{formatted_chat_response}</div>", unsafe_allow_html=True)
-
-            # Limpa a caixa de entrada após o envio
-            st.session_state.user_input = ""
+    if uploaded_file and client_name and meeting_date:
+        meeting_date_str = meeting_date.strftime("%d/%m/%Y")  # Converter data para string no formato desejado
+        with st.spinner('Processando o arquivo...'):
+            try:
+                index_name = process_docx(uploaded_file, client_name, meeting_date_str)
+                st.success(f"Documento processado e indexado com sucesso: {index_name}")
+            except Exception as e:
+                st.error(f"Ocorreu um erro: {e}")
