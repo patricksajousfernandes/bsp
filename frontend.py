@@ -5,6 +5,12 @@ from embedding import process_docx
 from datetime import datetime
 from embeddings_dadosgerais import process_pdf
 
+# Carregar variáveis de ambiente
+INDEX_NAME1 = st.secrets["general"]["INDEX_NAME1"]
+PINECONE_API_KEY = st.secrets["general"]["PINECONE_API_KEY"]
+AWS_ACCESS_KEY_ID = st.secrets["aws"]["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = st.secrets["aws"]["AWS_SECRET_ACCESS_KEY"]
+
 # Título do aplicativo
 st.title("Chatbot BSP Cloud")
 
@@ -29,8 +35,8 @@ if prompt := st.chat_input("O que você gostaria de perguntar?"):
     # Adicione uma mensagem de "Carregando..."
     with st.spinner('Processando sua pergunta...'):
         try:
-            # Chame a função do backend com a entrada do usuário
-            response = get_index_name(prompt)
+            # Chame a função do backend com a entrada do usuário e as variáveis de ambiente
+            response = get_index_name(prompt, INDEX_NAME1, PINECONE_API_KEY, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
         except Exception as e:
             st.error(f"Ocorreu um erro: {e}")
             st.stop()

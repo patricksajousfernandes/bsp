@@ -12,6 +12,8 @@ from pinecone import Pinecone, ServerlessSpec
 # Carregar variáveis de ambiente
 load_dotenv()
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
+aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 pc = Pinecone(api_key=pinecone_api_key)
 
 def process_docx(uploaded_file, client_name, meeting_date):
@@ -47,7 +49,9 @@ def process_docx(uploaded_file, client_name, meeting_date):
         embeddings = BedrockEmbeddings(
             credentials_profile_name="default",
             region_name="us-east-1",
-            model_id="amazon.titan-embed-text-v2:0"
+            model_id="amazon.titan-embed-text-v2:0",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key
         )
 
         # Verificar se o índice já existe
@@ -74,4 +78,3 @@ def process_docx(uploaded_file, client_name, meeting_date):
     finally:
         # Garantir que o arquivo temporário seja removido
         os.remove(temp_path)
- 
