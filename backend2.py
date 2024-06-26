@@ -12,7 +12,7 @@ import re
 
 load_dotenv()
 
-# Configuração dos embeddings e do modelo de linguagem
+# Configuração dos embeddings e do modelo de linguagefianl
 embeddings = BedrockEmbeddings(
     credentials_profile_name="default",
     region_name="us-east-1",
